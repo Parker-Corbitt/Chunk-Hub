@@ -1,6 +1,7 @@
 package net.parkerasa.chunkhub;
 
 import com.mojang.logging.LogUtils;
+import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
@@ -38,7 +39,7 @@ public class chunkhub
         modEventBus.addListener(this::commonSetup);
 
         MinecraftForge.EVENT_BUS.register(this);
-        
+        modEventBus.addListener(this::addCreative);
 
     }
 
@@ -49,7 +50,10 @@ public class chunkhub
 
     private void addCreative(BuildCreativeModeTabContentsEvent event)
     {
-
+        if(event.getTabKey() == CreativeModeTabs.TOOLS_AND_UTILITIES)
+        {
+            event.accept(ModItems.CAMERA);
+        }
     }
 
     @SubscribeEvent
