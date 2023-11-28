@@ -9,11 +9,11 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 @Repository("photos")
 public interface PhotoRepository extends MongoRepository<Photo, String> {
-    @Query("{title: '?0'}")
-    Photo findPhotoByTitle(String title);
     @Query("{user: '?0'}")
     List<Photo> findAllPhotosForUser(String user);
     @Query("{id: '?0'}")
     Photo findPhotoById(String id);
+    @Query("{user: '?0'}")
+    Photo findPhotoByUser(String user);
 
 }

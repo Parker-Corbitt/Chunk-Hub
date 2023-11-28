@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -25,28 +26,30 @@ class HealthController {
     }
 
     @PostMapping(value = "/photo")
-    public String storePhoto(@RequestBody() MultipartFile image) throws IOException {
-        photoRepository.save(new Photo("0", "test", "testUser",
+    public String storePhoto(@RequestBody MultipartFile image, String id, String user) throws IOException {
+        photoRepository.save(new Photo(id, user,
                 new Binary(BsonBinarySubType.BINARY, image.getBytes())));
         return("Stored");
     }
 
     @GetMapping(value = "/photo", produces = MediaType.IMAGE_JPEG_VALUE)
-    public @ResponseBody byte[] getAllPhotos() throws IOException {
-        Photo queryResult = photoRepository.findPhotoById("0");
+    public @ResponseBody byte[] getPhoto(@RequestParam String user) throws IOException {
+        Photo queryResult = photoRepository.findPhotoByUser(user);
             return queryResult.getImage().getData();
     }
 
     @GetMapping(value = "/photo-zip", produces = "application/zip")
-    public byte[] getAllPhotosZip() throws IOException {
-        Photo queryResult = photoRepository.findPhotoById("0");
+    public @ResponseBody byte[] getAllPhotosZip(@RequestParam String user) throws IOException {
+        List<Photo> queryResult = photoRepository.findAllPhotosForUser(user);
 
         File zipFile = new File("test.zip");
         ZipOutputStream zip = new ZipOutputStream(new FileOutputStream(zipFile));
-        ZipEntry entry = new ZipEntry("test.jpg");
-        zip.putNextEntry(entry);
-        zip.write(queryResult.getImage().getData());
-        zip.closeEntry();
+        for (Photo photo : queryResult) {
+            ZipEntry entry = new ZipEntry(photo.getId() + ".jpg");
+            zip.putNextEntry(entry);
+            zip.write(photo.getImage().getData());
+            zip.closeEntry();
+        }
         zip.close();
 
         FileInputStream fis = new FileInputStream(zipFile);
@@ -54,7 +57,6 @@ class HealthController {
         fis.read(result);
         fis.close();
         return result;
-
     }
 
 
