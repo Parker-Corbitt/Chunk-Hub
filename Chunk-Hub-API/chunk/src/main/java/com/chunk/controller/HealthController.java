@@ -5,11 +5,13 @@ import com.chunk.repository.PhotoRepository;
 import org.bson.BsonBinarySubType;
 import org.bson.types.Binary;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
+import java.io.*;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 @RestController
 class HealthController {
@@ -28,5 +30,32 @@ class HealthController {
                 new Binary(BsonBinarySubType.BINARY, image.getBytes())));
         return("Stored");
     }
+
+    @GetMapping(value = "/photo", produces = MediaType.IMAGE_JPEG_VALUE)
+    public @ResponseBody byte[] getAllPhotos() throws IOException {
+        Photo queryResult = photoRepository.findPhotoById("0");
+            return queryResult.getImage().getData();
+    }
+
+    @GetMapping(value = "/photo-zip", produces = "application/zip")
+    public byte[] getAllPhotosZip() throws IOException {
+        Photo queryResult = photoRepository.findPhotoById("0");
+
+        File zipFile = new File("test.zip");
+        ZipOutputStream zip = new ZipOutputStream(new FileOutputStream(zipFile));
+        ZipEntry entry = new ZipEntry("test.jpg");
+        zip.putNextEntry(entry);
+        zip.write(queryResult.getImage().getData());
+        zip.closeEntry();
+        zip.close();
+
+        FileInputStream fis = new FileInputStream(zipFile);
+        byte[] result = new byte[(int) zipFile.length()];
+        fis.read(result);
+        fis.close();
+        return result;
+
+    }
+
 
 }

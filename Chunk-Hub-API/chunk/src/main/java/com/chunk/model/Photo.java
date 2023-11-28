@@ -17,6 +17,9 @@ public class Photo {
         this.title = title;
         this.user = user;
         this.image = image;
+    }
 
+    public Binary getImage() {
+        return this.image;
     }
 }
