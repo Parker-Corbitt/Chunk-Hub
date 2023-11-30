@@ -7,7 +7,7 @@ import net.minecraft.world.item.Item;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
-
+import net.parkerasa.chunkhub.item.custom.CameraItem;
 
 
 public class ModItems {
@@ -17,7 +17,7 @@ public class ModItems {
             DeferredRegister.create(ForgeRegistries.ITEMS, chunkhub.MOD_ID);
 
     public static final RegistryObject CAMERA = ITEMS.register("camera",
-        () -> new Item(new Item.Properties()));
+        () -> new CameraItem(new Item.Properties()));
 
     public static void register(IEventBus eventBus)
     {
