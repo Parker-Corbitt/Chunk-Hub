@@ -16,6 +16,7 @@ import java.io.File;
 import net.parkerasa.chunkhub.menu.photoScreen;
 
 
+
 public class CameraItem extends Item {
     public CameraItem(Properties cameraProperties) {
         super(cameraProperties);
@@ -23,7 +24,7 @@ public class CameraItem extends Item {
 
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
-        if (!level.isClientSide) {
+        if (level.isClientSide()) {
 
             File x = new File("C:\\Users\\gwend\\AppData\\Roaming\\.minecraft");
 
