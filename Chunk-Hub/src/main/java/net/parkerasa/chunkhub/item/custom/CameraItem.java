@@ -13,9 +13,8 @@ import java.util.function.Consumer;
 import net.minecraft.world.level.Level;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import java.io.File;
-import net.minecraft.client.Minecraft;
-import net.parkerasa.chunkhub.screens.FilenameInputScreen;
-import net.minecraft.client.gui.components.Button;
+import net.parkerasa.chunkhub.menu.photoScreen;
+
 
 public class CameraItem extends Item {
     public CameraItem(Properties cameraProperties) {
@@ -28,8 +27,7 @@ public class CameraItem extends Item {
 
             File x = new File("C:\\Users\\gwend\\AppData\\Roaming\\.minecraft");
 
-            // FilenameInputScreen filenameInputScreen = new FilenameInputScreen(Component.nullToEmpty("Filename Input"));
-            // Minecraft.getInstance().setScreen(filenameInputScreen);
+            Minecraft.getInstance().setScreen(new photoScreen(Component.literal("test")));
 
             Minecraft minecraft = Minecraft.getInstance();
             minecraft.options.hideGui = true; // Hide the GUI
