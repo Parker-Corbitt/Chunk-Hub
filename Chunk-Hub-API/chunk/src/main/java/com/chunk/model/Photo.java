@@ -17,6 +17,11 @@ public class Photo {
         this.image = image;
     }
 
+    public Photo(String user, Binary image) {
+        this.user = user;
+        this.image = image;
+    }
+
     public Binary getImage() {
         return this.image;
     }
