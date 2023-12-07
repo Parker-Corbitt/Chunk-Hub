@@ -1,65 +1,47 @@
 package net.parkerasa.chunkhub.item.custom;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
-import net.minecraft.client.player.KeyboardInput;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.Interaction;
+import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.context.UseOnContext;
-
-import javax.imageio.ImageIO;
-import java.awt.*;
-import java.awt.image.BufferedImage;
+import net.minecraft.world.item.ItemStack;
+import java.util.function.Consumer;
+import net.minecraft.world.level.Level;
+import com.mojang.blaze3d.pipeline.RenderTarget;
 import java.io.File;
-import java.io.IOException;
+import net.minecraft.client.Minecraft;
+import net.parkerasa.chunkhub.screens.FilenameInputScreen;
+import net.minecraft.client.gui.components.Button;
 
 public class CameraItem extends Item {
-    public CameraItem(Properties cameraProperties)
-    {
+    public CameraItem(Properties cameraProperties) {
         super(cameraProperties);
     }
 
-//    public void takeScreenshot(String directory, String format)
-//    {
-//        try
-//        {
-//            Robot robot = new Robot();
-//            String fileName = directory + File.separator + "Screenshot." + format;
-//
-//
-//            new File(directory).mkdirs();
-//
-//            Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-//            Rectangle captureRect = new Rectangle(screenSize);
-//            BufferedImage screenFullImage = robot.createScreenCapture(captureRect);
-//            ImageIO.write(screenFullImage, format, new File(fileName));
-//        }
-//        catch (Exception ex)
-//        {
-//            System.err.println(ex);
-//        }
-//    }
-
     @Override
-    public InteractionResult useOn(UseOnContext snapshot)
-    {
-        if(!snapshot.getLevel().isClientSide)
-        {
-            Player player = snapshot.getPlayer();
-            player.sendSystemMessage(Component.literal("attempt"));
-            //takeScreenshot("C:\\Users\\gwend\\AppData\\Roaming\\.minecraft\\screenshots", "png");
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        if (!level.isClientSide) {
+
             File x = new File("C:\\Users\\gwend\\AppData\\Roaming\\.minecraft");
-            try {
-                Screenshot a = new Screenshot(x, 1, 1, 1);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
 
+            // FilenameInputScreen filenameInputScreen = new FilenameInputScreen(Component.nullToEmpty("Filename Input"));
+            // Minecraft.getInstance().setScreen(filenameInputScreen);
 
+            Minecraft minecraft = Minecraft.getInstance();
+            minecraft.options.hideGui = true; // Hide the GUI
+
+            RenderTarget renderTarget = minecraft.getMainRenderTarget();
+            Consumer<Component> consumer = (component) -> player.sendSystemMessage(component);
+            Screenshot.grab(x, renderTarget, consumer);
+            consumer.accept(Component.literal("attempt"));
+            minecraft.options.hideGui = false; // Show the GUI again
+            
         }
 
-        return InteractionResult.SUCCESS;
+        return new InteractionResultHolder<>(InteractionResult.SUCCESS, player.getItemInHand(hand));
     }
 }
