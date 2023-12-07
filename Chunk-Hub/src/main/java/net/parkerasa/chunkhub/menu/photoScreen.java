@@ -1,6 +1,7 @@
 package net.parkerasa.chunkhub.menu;
 
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -26,6 +27,13 @@ public class photoScreen extends Screen {
         int boxY = (this.height - boxHeight) / 2; // center the box vertically
 
         this.addRenderableWidget(new EditBox(font, boxX, boxY, boxWidth, boxHeight, title));
+
+        int buttonWidth = 100;
+        int buttonHeight = 20;
+        int buttonY = boxY + boxHeight + 10; // 10 pixels below the EditBox
+
+        // Cancel button on the left
+        
     }
 
     @Override
