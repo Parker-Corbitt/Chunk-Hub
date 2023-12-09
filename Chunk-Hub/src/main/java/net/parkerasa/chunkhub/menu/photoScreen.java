@@ -39,9 +39,6 @@ public class photoScreen extends Screen {
     // Set the request method to PUT
     conn.setRequestMethod("PUT");
 
-    // Create a boundary string
-    String boundary = "Boundary" + System.currentTimeMillis() + "Boundary";
-
     // Set the request property
     // conn.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
     conn.setDoOutput(true);
