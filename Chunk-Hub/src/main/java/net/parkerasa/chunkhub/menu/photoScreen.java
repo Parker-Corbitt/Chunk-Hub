@@ -28,6 +28,7 @@ public class photoScreen extends Screen {
     private String editText;
     private String[] tags;
     private String pngstuff;
+    JsonObject body = new JsonObject();
 
     public photoScreen(Component title) {
         super(title);
@@ -38,7 +39,7 @@ public class photoScreen extends Screen {
     protected void init() {
         super.init();
 
-        //File name Edit Box
+        // File name Edit Box
         int nameBoxWidth = 285;
         int nameBoxHeight = 20;
         int boxX = (this.width - nameBoxWidth) / 2; // center the box horizontally
@@ -47,7 +48,7 @@ public class photoScreen extends Screen {
         Component prompt = Component.literal("Enter photo name (only letters/numbers/underscores)");
         editBox.setHint(prompt);
 
-        //Tags Edit Box
+        // Tags Edit Box
         int tagsBoxWidth = 285;
         int tagsBoxHeight = 20;
         int tagsBoxX = (this.width - tagsBoxWidth) / 2; // center the box horizontally
@@ -56,12 +57,12 @@ public class photoScreen extends Screen {
         Component tagsHint = Component.literal("Enter tags (comma separated)");
         tagsBox.setHint(tagsHint);
 
-        //Button basics
+        // Button basics
         int buttonWidth = 100;
         int buttonHeight = 20;
         int buttonY = (this.height - 20) / 2 + 30; // below the edit box
 
-        //Individual Buttons
+        // Individual Buttons
         int buttonXRight = boxX + nameBoxWidth - buttonWidth; // align the right side of the button with the right side
         int buttonXLeft = boxX; // align the left side of the button with the left side of the box
         int buttonXMiddle = (this.width - buttonWidth) / 2; // center the button horizontally
@@ -69,11 +70,38 @@ public class photoScreen extends Screen {
         Component message = Component.literal("Take photo");
         Component cancelMessage = Component.literal("Cancel");
 
-
         // get the filename from the editbox
         Button.OnPress onPress = (button) -> {
+
             editText = editBox.getValue();
             editText = editText.replaceAll("[^a-zA-Z0-9_]", "");
+
+            // Get the directory
+            File directory = new File(
+                    System.getProperty("user.home") + File.separator + "AppData\\Roaming\\.minecraft\\screenshots");
+
+            // Get all files in the directory
+            File[] files = directory.listFiles();
+
+            System.out.println("Files in directory: " + files.length);
+
+            // Check if editText is the same as any filename in the directory
+            for (File file : files) {
+                if (file.isFile()) {
+                    String filename = file.getName();
+                    int pos = filename.lastIndexOf(".");
+                    if (pos > 0) {
+                        filename = filename.substring(0, pos);
+                    }
+                    if (filename.equals(editText)) {
+                        this.onClose();
+                        Player player = minecraft.player;
+                        player.sendSystemMessage(
+                                Component.literal("File already exists. Please enter a different name."));
+                        return; // exit the method if a file with the same name exists
+                    }
+                }
+            }
 
             tags = tagsBox.getValue().split(",");
             for (int i = 0; i < tags.length; i++) {
@@ -180,11 +208,8 @@ public class photoScreen extends Screen {
             Arrays.sort(files, (f1, f2) -> Long.compare(f2.lastModified(), f1.lastModified()));
 
             File mostRecentScreenshot = files[0];
-
-            // Step 2: Get the new name from the editText
             String newName = editText;
 
-            // Step 3: Rename the screenshot
             Path sourcePath = Paths.get(mostRecentScreenshot.getAbsolutePath());
             try {
                 Files.move(sourcePath, sourcePath.resolveSibling(newName + ".png"));
@@ -206,7 +231,6 @@ public class photoScreen extends Screen {
 
             pngstuff = pngBytes;
 
-            JsonObject body = new JsonObject();
             body.addProperty("username", minecraft.getUser().getName());
             body.addProperty("filename", editText);
             body.addProperty("tags", Arrays.toString(tags));
@@ -218,9 +242,9 @@ public class photoScreen extends Screen {
                 e.printStackTrace();
             }
 
+            String tagsString = Arrays.toString(tags);
+            player.sendSystemMessage(Component.literal(tagsString));
         });
-        String tagsString = Arrays.toString(tags);
-        player.sendSystemMessage(Component.literal(tagsString));
 
     }
 
@@ -234,9 +258,10 @@ public class photoScreen extends Screen {
 
         try (DataOutputStream wr = new DataOutputStream(conn.getOutputStream())) {
 
-            wr.writeBytes(body.toString() + "\r\n");
+            wr.writeBytes(body.toString());
 
             wr.flush();
+            wr.close();
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
