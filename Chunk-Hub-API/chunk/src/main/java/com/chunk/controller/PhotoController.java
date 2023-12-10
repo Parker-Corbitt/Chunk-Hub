@@ -3,7 +3,12 @@ package com.chunk.controller;
 import com.chunk.model.Photo;
 import com.chunk.model.UserPhoto;
 import com.chunk.service.UserService;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.util.JSONPObject;
+import com.jayway.jsonpath.internal.filter.ValueNodes;
 import org.apache.tomcat.util.json.JSONParser;
 import org.apache.tomcat.util.json.ParseException;
 import org.bson.BsonBinarySubType;
@@ -26,6 +31,8 @@ class PhotoController {
 
     @Autowired
     UserService userService;
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @PostMapping(value = "/photo")
     public String storePhotoForUser(@RequestBody MultipartFile image, String username, String filename, String[] tags) throws IOException {
@@ -62,18 +69,31 @@ class PhotoController {
     }
 
         @PutMapping(value = "/photos")
-        public String dubby(@RequestBody String username) throws IOException {
-            System.out.println(username);
-            Scanner scanner = new Scanner(username).useDelimiter(",");
-            String userValue = scanner.next();
-            String filenameValue = scanner.next();
-            String tagsValue = scanner.next();
-            String[] tags = tagsValue.split(" ");
-            System.out.println(userValue);
-            System.out.println(filenameValue);
-            System.out.println(tagsValue);
-            String imageValue = scanner.useDelimiter("\\A").next();
-            System.out.println(imageValue);
+        public String dubby(@RequestBody String username) throws IOException, JSONException {
+            ObjectMapper mapper = new ObjectMapper();
+            JsonFactory factory = mapper.getJsonFactory();
+            try {
+                JsonParser parser = factory.createJsonParser(username);
+                JsonNode Obj = mapper.readTree(parser);
+                System.out.println(Obj.get("username"));
+                String userValue = Obj.get("username").toString().toLowerCase();
+                System.out.println(Obj.get("filename"));
+                String filenameValue = Obj.get("filename").toString().toLowerCase();
+                System.out.println(Obj.get("image"));
+                byte[] image = Obj.get("image").toString().getBytes();
+                String[] tags = Obj.get("tags").toString().split(",");
+                userService.insertUserPhoto(new UserPhoto(userValue, new Photo[]{new Photo(userValue, filenameValue,
+                        new Binary(BsonBinarySubType.BINARY, image), tags)}));
+
+
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+
+
+
 
             return "Bingus Dick";
         }
@@ -93,7 +113,7 @@ class PhotoController {
 
 
 
-    @GetMapping(value = "/photo-zip", produces = "application/zip")
+    @GetMapping(value = "/photo-zip")
     public @ResponseBody byte[] getAllPhotosZip(@RequestParam String username) throws IOException {
         String usernameValue = username.toLowerCase();
         List<Photo> queryResult = userService.findPhotosByUsername(usernameValue);
