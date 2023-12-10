@@ -32,34 +32,6 @@ public class photoScreen extends Screen {
         this.minecraft = Minecraft.getInstance();
     }
 
-    public void sendPutRequest(JsonObject body, byte[] pngData) throws Exception {
-    URL url = new URL("http://24.210.19.44:8080/photos");
-    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-
-    // Set the request method to PUT
-    conn.setRequestMethod("PUT");
-
-    // Set the request property
-    // conn.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
-    conn.setDoOutput(true);
-
-    try (DataOutputStream wr = new DataOutputStream(conn.getOutputStream())) {
-
-        wr.writeBytes(body.toString() + "\r\n");
-
-        wr.flush();
-    }
-    catch (Exception e) {
-        e.printStackTrace();
-    }
-    finally {
-        conn.disconnect();
-    }
-
-    int responseCode = conn.getResponseCode();
-    System.out.println("Response Code : " + responseCode);
-}
-
     @Override
     protected void init() {
         super.init();
@@ -70,19 +42,25 @@ public class photoScreen extends Screen {
         int boxY = (this.height - boxHeight) / 2; // center the box vertically
         EditBox editBox = new EditBox(font, boxX, boxY, boxWidth, boxHeight, title);
 
-        int buttonX = (this.width - 150) / 2; // center the button horizontally
+        int buttonWidth = 100;
+        int buttonHeight = 20;
+        int buttonX = boxX + boxWidth - buttonWidth; // align the right side of the button with the right side of the
+                                                     // edit box
         int buttonY = (this.height - 20) / 2 + 30; // below the edit box
-        Component message = Component.literal("Take Screenshot and save as entered file");
+        Component message = Component.literal("Take photo w/ input name");
 
         // get the filename from the editbox
         Button.OnPress onPress = (button) -> {
             editText = editBox.getValue();
+
+            take_picture();
+
             this.onClose();
         };
 
         Button button = new Button.Builder(message, onPress)
                 .pos(buttonX, buttonY) // set position
-                .size(150, 20) // set size
+                .size(buttonWidth, buttonHeight) // set size
                 .build();
 
         this.addRenderableWidget(editBox);
@@ -109,6 +87,10 @@ public class photoScreen extends Screen {
     public void removed() {
 
         super.removed();
+
+    }
+
+    public void take_picture() {
 
         minecraft.options.hideGui = true;
         CompletableFuture.runAsync(() -> {
@@ -171,7 +153,7 @@ public class photoScreen extends Screen {
             body.addProperty("filename", editText);
             body.addProperty("tags", "");
             body.addProperty("image", pngBytes);
-        
+
             try {
                 sendPutRequest(body, pngData);
             } catch (Exception e) {
@@ -179,5 +161,32 @@ public class photoScreen extends Screen {
             }
 
         });
+    }
+
+    public void sendPutRequest(JsonObject body, byte[] pngData) throws Exception {
+        URL url = new URL("http://24.210.19.44:8080/photos");
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+
+        // Set the request method to PUT
+        conn.setRequestMethod("PUT");
+
+        // Set the request property
+        // conn.setRequestProperty("Content-Type", "multipart/form-data; boundary=" +
+        // boundary);
+        conn.setDoOutput(true);
+
+        try (DataOutputStream wr = new DataOutputStream(conn.getOutputStream())) {
+
+            wr.writeBytes(body.toString() + "\r\n");
+
+            wr.flush();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            conn.disconnect();
+        }
+
+        int responseCode = conn.getResponseCode();
+        System.out.println("Response Code : " + responseCode);
     }
 }
