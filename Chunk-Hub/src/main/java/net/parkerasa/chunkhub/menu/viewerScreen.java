@@ -1,5 +1,6 @@
 package net.parkerasa.chunkhub.menu;
 
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -102,11 +103,6 @@ public class viewerScreen extends Screen {
         if (imageHeights == null) {
             imageHeights = new int[listOfFiles.length];
         }
-        for (File file : listOfFiles) {
-            if (file.isFile()) {
-
-            }
-        }
     }
 
     @Override
@@ -118,7 +114,7 @@ public class viewerScreen extends Screen {
 
         if (listOfFiles.length != 0) {
 
-            if(images[index] == null) {
+            if (images[index] == null) {
                 load_file();
             }
 
@@ -133,21 +129,18 @@ public class viewerScreen extends Screen {
 
             textureManager.getTexture(images[index]).setFilter(true, true);
 
-            int width = imageWidths[index];
-            int height = imageHeights[index];
 
             int x = this.width / 2 - width / 2;
             int y = this.height / 2 - height / 2;
 
             try {
-                graphics.blit(images[index], x, y, 0, 0, width, height);
+                graphics.blit(images[index], x, y, 0, 0, imageWidths[index], imageHeights[index]);
                 System.out.println("Blit");
             } catch (Exception e) {
                 e.printStackTrace();
                 System.out.println("Error: Not Blit" + e);
             }
         }
-
     }
 
     @Override
@@ -161,6 +154,8 @@ public class viewerScreen extends Screen {
             return;
         }
 
+        listOfFiles = folder.listFiles();
+
         System.out.println("Load File");
         System.out.println(listOfFiles[index].getName());
 
@@ -173,6 +168,26 @@ public class viewerScreen extends Screen {
             e.printStackTrace();
             System.out.println("Error: Not Read" + e);
         }
+
+        // // Define your desired width
+        // int desiredWidth = 1260;
+
+        // // Calculate the scaling factor
+        // double scaleFactor = (double) desiredWidth / image.getWidth();
+
+        // // Calculate the new height to maintain the aspect ratio
+        // int newHeight = (int) (image.getHeight() * scaleFactor);
+
+        // // Scale the image
+        // Image scaledImage = image.getScaledInstance(desiredWidth, newHeight, Image.SCALE_SMOOTH);
+
+        // // Convert the scaled image back to BufferedImage
+        // BufferedImage bufferedScaledImage = new BufferedImage(desiredWidth, newHeight, BufferedImage.TYPE_INT_ARGB);
+        // Graphics2D g2d = bufferedScaledImage.createGraphics();
+        // g2d.drawImage(scaledImage, 0, 0, null);
+        // g2d.dispose();
+
+        // image = bufferedScaledImage; // Replace the original image with the scaled one
 
         int width = image.getWidth();
         int height = image.getHeight();
@@ -204,19 +219,19 @@ public class viewerScreen extends Screen {
         try {
 
             // Create a new NativeImage
-            NativeImage blammoimage = new NativeImage(NativeImage.Format.RGBA, width, height, false);
+            NativeImage imagetorender = new NativeImage(NativeImage.Format.RGBA, width, height, false);
 
             // Set the pixels of the NativeImage
             for (int y = 0; y < height; y++) {
                 for (int x = 0; x < width; x++) {
                     int pixel = pixels[y * width + x];
-                    blammoimage.setPixelRGBA(x, y, pixel);
+                    imagetorender.setPixelRGBA(x, y, pixel);
                 }
             }
 
-            DynamicTexture texture = new DynamicTexture(blammoimage);
+            DynamicTexture texture = new DynamicTexture(imagetorender);
             ResourceLocation resourceLocation = Minecraft.getInstance().getTextureManager()
-                    .register("blammoimage", texture);
+                    .register("imagetorender", texture);
             images[index] = resourceLocation;
 
         } catch (Exception e) {
