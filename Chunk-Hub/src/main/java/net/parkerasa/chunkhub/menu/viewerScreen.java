@@ -89,7 +89,11 @@ public class viewerScreen extends Screen {
         if (imageHeights == null) {
             imageHeights = new int[listOfFiles.length];
         }
-        
+        for (File file : listOfFiles) {
+            if (file.isFile()) {
+
+            }
+        }
     }
 
     @Override
@@ -128,24 +132,16 @@ public class viewerScreen extends Screen {
             image = ImageIO.read(new File(System.getProperty("user.home") + File.separator
                     + "AppData\\Roaming\\.minecraft\\screenshots\\" + listOfFiles[index].getName()));
         } catch (IOException e) {
-            System.out.println("Error: Couldn't load image" + e);
             e.printStackTrace();
         }
 
-        if(image != null) {
-            int width = image.getWidth();
-            int height = image.getHeight();
-    
-            imageWidths[index] = width;
-            imageHeights[index] = height;
-        }
-        else
-        {   
-            IOException e = new IOException();
-            e.printStackTrace();
-        }
-        
+        int width = image.getWidth();
+        int height = image.getHeight();
 
+        imageWidths[index] = width;
+        imageHeights[index] = height;
+
+        ByteBuffer byteBuffer = ByteBuffer.allocateDirect(4 * width * height);
         int[] pixels = new int[width * height];
         image.getRGB(0, 0, width, height, pixels, 0, width);
 
@@ -154,30 +150,31 @@ public class viewerScreen extends Screen {
             pixels[i] = (argb & 0xFF00FF00) | ((argb & 0xFF0000) >> 16) | ((argb & 0xFF) << 16);
         }
 
-        // for (int y = height - 1; y >= 0; y--) {
-        // for (int x = 0; x < width; x++) {
+        for (int y = height - 1; y >= 0; y--) {
+            for (int x = 0; x < width; x++) {
 
-        // int pixel = pixels[y * width + x];
+                int pixel = pixels[y * width + x];
 
-        // byteBuffer.put((byte) ((pixel >> 16) & 0xFF)); // Red component
-        // byteBuffer.put((byte) ((pixel >> 8) & 0xFF)); // Green component
-        // byteBuffer.put((byte) (pixel & 0xFF)); // Blue component
-        // byteBuffer.put((byte) ((pixel >> 24) & 0xFF)); // Alpha component. Only for
-        // RGBA
-        // }
-        // }
+                byteBuffer.put((byte) ((pixel >> 16) & 0xFF)); // Red component
+                byteBuffer.put((byte) ((pixel >> 8) & 0xFF)); // Green component
+                byteBuffer.put((byte) (pixel & 0xFF)); // Blue component
+                byteBuffer.put((byte) ((pixel >> 24) & 0xFF)); // Alpha component. Only for
+                // RGBA
+            }
+        }
 
-        // byteBuffer.flip(); //FOR THE LOVE OF GOD DO NOT FORGET THIS
+        byteBuffer.flip(); //FOR THE LOVE OF GOD DO NOT FORGET THIS
 
-        DynamicTexture dynamicTexture = new DynamicTexture(width, height, false);
-        dynamicTexture.getPixels().drawPixels();
-        dynamicTexture.upload();
+        NativeImage nativeImage = new NativeImage(NativeImage.Format.RGBA, width, height, false);
+        
+        try {
+            nativeImage.read(byteBuffer);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
-        // Register the texture
-        ResourceLocation textureLocation = Minecraft.getInstance().getTextureManager().register("dynamic",
-                dynamicTexture);
-
-        images[index] = textureLocation;
+        DynamicTexture texture = new DynamicTexture(nativeImage);
+        images[index] = Minecraft.getInstance().getTextureManager().register("chunkhub", texture);
 
     }
 
