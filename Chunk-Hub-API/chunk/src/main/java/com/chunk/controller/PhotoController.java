@@ -99,7 +99,7 @@ class PhotoController {
         }
 
 
-        return "Bingus Dick";
+        return "Bingus";
     }
 
     @GetMapping(value = "/photo-tags-user", produces = {"Application/zip"})
