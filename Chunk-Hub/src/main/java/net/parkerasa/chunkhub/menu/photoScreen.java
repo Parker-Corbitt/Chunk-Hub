@@ -33,7 +33,6 @@ public class photoScreen extends Screen {
     private final Minecraft minecraft;
     private String editText;
     private String[] tags;
-    private String pngstuff;
     JsonObject body = new JsonObject();
 
     public photoScreen(Component title) {
@@ -155,10 +154,10 @@ public class photoScreen extends Screen {
 
         this.addRenderableWidget(editBox);
         this.addRenderableWidget(tagsBox);
+        this.addRenderableWidget(viewPhotos);
+        this.addRenderableWidget(query);
         this.addRenderableWidget(button);
         this.addRenderableWidget(cancel);
-        this.addRenderableWidget(query);
-        this.addRenderableWidget(viewPhotos);
 
     }
 

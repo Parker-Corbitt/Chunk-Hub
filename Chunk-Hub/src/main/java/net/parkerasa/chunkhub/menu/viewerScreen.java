@@ -1,6 +1,5 @@
 package net.parkerasa.chunkhub.menu;
 
-import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -18,13 +17,13 @@ import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
-
 public class viewerScreen extends Screen {
 
     private ResourceLocation[] images;
     private int index = 0;
     private int[] imageWidths;
     private int[] imageHeights;
+    private File[] listOfFiles;
 
     public viewerScreen(Component title) {
         super(title);
@@ -77,44 +76,20 @@ public class viewerScreen extends Screen {
 
         File folder = new File(System.getProperty("user.home") + File.separator
                 + "AppData\\Roaming\\.minecraft\\screenshots");
-        File[] listOfFiles = folder.listFiles();
+        listOfFiles = folder.listFiles();
 
-        for (File file : listOfFiles) {
-            if (file.isFile()) {
-                try {
-
-                    if (imageWidths == null) {
-                        imageWidths = new int[listOfFiles.length];
-                    }
-                    
-                    if (imageHeights == null) {
-                        imageHeights = new int[listOfFiles.length];
-                    }
-
-                    BufferedImage bufferedImage = ImageIO.read(file);
-                    NativeImage nativeImage = null;
-
-                    imageWidths[index] = nativeImage.getWidth();
-                    imageHeights[index] = nativeImage.getHeight();
-
-                    DynamicTexture dynamicTexture = new DynamicTexture(nativeImage);
-                    
-                    ResourceLocation resourceLocation = Minecraft.getInstance().getTextureManager().register("chunkhub",
-                            dynamicTexture);
-                    if (images == null) {
-                        images = new ResourceLocation[listOfFiles.length];
-                    }
-                    images[index] = resourceLocation;
-                    index++;
-                    System.out.println("Loaded image: " + file.getName());
-                } catch (IOException e) {
-                    System.out.println("Failed to load image: " + file.getName());
-                    e.printStackTrace();
-                }
-            }
+        if (images == null) {
+            images = new ResourceLocation[listOfFiles.length];
         }
-        index = 0;
 
+        if (imageWidths == null) {
+            imageWidths = new int[listOfFiles.length];
+        }
+
+        if (imageHeights == null) {
+            imageHeights = new int[listOfFiles.length];
+        }
+        
     }
 
     @Override
@@ -122,28 +97,88 @@ public class viewerScreen extends Screen {
 
         this.renderBackground(graphics, mouseX, mouseY, partialTick);
 
-        if (images[index] != null) {
-            TextureManager textureManager = Minecraft.getInstance().getTextureManager();
-            textureManager.getTexture(images[index]);
-            textureManager.bindForSetup(images[index]);
+        super.render(graphics, mouseX, mouseY, partialTick);
 
-            int imageWidth = imageWidths[index];
-            int imageHeight = imageHeights[index];
-            int imageX = this.width / 2 - imageWidth / 2;
-            int imageY = this.height / 2 - imageHeight / 2;
-
-            // Draw the image
-            graphics.blit(images[index], imageX, imageY, 0, 0, imageWidth, imageHeight, imageWidth, imageHeight);
-
+        if (images[index] == null) {
+            load_file();
         }
 
-        super.render(graphics, mouseX, mouseY, partialTick);
+        TextureManager textureManager = Minecraft.getInstance().getTextureManager();
+        textureManager.bindForSetup(images[index]);
+        textureManager.getTexture(images[index]).setFilter(false, false);
+
+        int width = imageWidths[index];
+        int height = imageHeights[index];
+
+        int x = this.width / 2 - width / 2;
+        int y = this.height / 2 - height / 2;
+
+        graphics.blit(images[index], y, mouseX, mouseY, partialTick, width, height, x, y);
 
     }
 
     @Override
     public void onClose() {
         super.onClose();
+    }
+
+    public void load_file() {
+        BufferedImage image = null;
+        try {
+            image = ImageIO.read(new File(System.getProperty("user.home") + File.separator
+                    + "AppData\\Roaming\\.minecraft\\screenshots\\" + listOfFiles[index].getName()));
+        } catch (IOException e) {
+            System.out.println("Error: Couldn't load image" + e);
+            e.printStackTrace();
+        }
+
+        if(image != null) {
+            int width = image.getWidth();
+            int height = image.getHeight();
+    
+            imageWidths[index] = width;
+            imageHeights[index] = height;
+        }
+        else
+        {   
+            IOException e = new IOException();
+            e.printStackTrace();
+        }
+        
+
+        int[] pixels = new int[width * height];
+        image.getRGB(0, 0, width, height, pixels, 0, width);
+
+        for (int i = 0; i < pixels.length; i++) {
+            int argb = pixels[i];
+            pixels[i] = (argb & 0xFF00FF00) | ((argb & 0xFF0000) >> 16) | ((argb & 0xFF) << 16);
+        }
+
+        // for (int y = height - 1; y >= 0; y--) {
+        // for (int x = 0; x < width; x++) {
+
+        // int pixel = pixels[y * width + x];
+
+        // byteBuffer.put((byte) ((pixel >> 16) & 0xFF)); // Red component
+        // byteBuffer.put((byte) ((pixel >> 8) & 0xFF)); // Green component
+        // byteBuffer.put((byte) (pixel & 0xFF)); // Blue component
+        // byteBuffer.put((byte) ((pixel >> 24) & 0xFF)); // Alpha component. Only for
+        // RGBA
+        // }
+        // }
+
+        // byteBuffer.flip(); //FOR THE LOVE OF GOD DO NOT FORGET THIS
+
+        DynamicTexture dynamicTexture = new DynamicTexture(width, height, false);
+        dynamicTexture.getPixels().drawPixels();
+        dynamicTexture.upload();
+
+        // Register the texture
+        ResourceLocation textureLocation = Minecraft.getInstance().getTextureManager().register("dynamic",
+                dynamicTexture);
+
+        images[index] = textureLocation;
+
     }
 
 }

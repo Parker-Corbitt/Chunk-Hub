@@ -79,27 +79,23 @@ public class queryScreen extends Screen {
                 tags[i] = tags[i].replaceAll("[^a-zA-Z0-9_]", "");
             }
 
-            if((username != null && username.length() > 0) && (tags.length == 0 && tags != null)) {
-                get_param = 0;;
-            }
-            else if((tags.length > 0 && tags != null) && (username == null && username.length() == 0)) {
-                get_param = 1;
-            }
-            else if((username != null && username.length() > 0) && (tags.length > 0 && tags != null))
-            {
+            if (username.length() > 0 && tags.length >= 1 && tags[0] != "") {
                 get_param = 2;
-            }
-            else {
-                return;
+            } else if (username.length() > 0 && tags[0] == "") {
+                get_param = 0;
+            } else if (tags[0] != "") {
+                get_param = 1;
+            } else {
+                get_param = -1;
             }
 
             try {
+                System.out.println(get_param);
                 sendGetRequest();
             } catch (Exception e) {
-                e.printStackTrace();
+                System.out.println("Error: " + e);
             }
         };
-
 
         Button cancel = new Button.Builder(cancelMessage, cancelPress)
                 .pos(buttonXLeft, buttonY) // set position
@@ -116,13 +112,11 @@ public class queryScreen extends Screen {
                 .size(buttonWidth, buttonHeight) // set size
                 .build();
 
-
-
         this.addRenderableWidget(editBox);
+        this.addRenderableWidget(tagsBox);
+        this.addRenderableWidget(cancel);
         this.addRenderableWidget(back_button);
         this.addRenderableWidget(query);
-        this.addRenderableWidget(cancel);
-        this.addRenderableWidget(tagsBox);
     }
 
     @Override
@@ -144,41 +138,40 @@ public class queryScreen extends Screen {
     public void removed() {
 
         super.removed();
-        // Player player = minecraft.player;
-        // player.sendSystemMessage(Component.literal(player.getName().getString()));
 
     }
 
     public void sendGetRequest() throws Exception {
 
+        // Define the URL
         URL url = new URL("http://");
-        if(get_param == 0) {
+        if (get_param == 0) {
             url = new URL("http://24.210.19.44:8080/photo-user?username=");
             url = new URL(url.toString() + username);
-        }
-        else if(get_param == 1) {
-            url = new URL("http://24.210.19.44:8080/photo-tags?tags=");
+        } else if (get_param == 1) {
+            url = new URL("http://24.210.19.44:8080/photo-tags?tag=");
             url = new URL(url.toString() + tags[0]);
-            // for(int i = 1; i < tags.length; i++) {
-            //     url = new URL(url.toString() + "," + tags[i]);
-            // }
-        }
-        else if (get_param == 2)
-        {
+            for (int i = 1; i < tags.length; i++) {
+                url = new URL(url.toString() + "," + tags[i]);
+            }
+        } else if (get_param == 2) {
             url = new URL("http://24.210.19.44:8080/photo-tags-user?username=");
-            url = new URL(url.toString() + username + "&tags=");
+            url = new URL(url.toString() + username + "&tag=");
             url = new URL(url.toString() + tags[0]);
-            // for(int i = 1; i < tags.length; i++) {
-            //     url = new URL(url.toString() + "," + tags[i]);
-            // }
+            for (int i = 1; i < tags.length; i++) {
+                url = new URL(url.toString() + "," + tags[i]);
+            }
         }
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 
+        // Open a connection
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setRequestMethod("GET");
 
+        // Check for successful response code or throw error
         int responseCode = conn.getResponseCode();
         System.out.println("Response Code : " + responseCode);
-        // Define the path where you want to save the zip file
+
+        // Define the zip file path
         String zipFilePath = System.getProperty("user.home") + File.separator
                 + "AppData\\Roaming\\.minecraft\\screenshots\\file.zip";
 
