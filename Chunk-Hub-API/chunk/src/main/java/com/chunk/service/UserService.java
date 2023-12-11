@@ -12,6 +12,7 @@ import org.springframework.data.mongodb.core.SimpleMongoClientDatabaseFactory;
 import org.springframework.data.mongodb.core.aggregation.Aggregation;
 import org.springframework.data.mongodb.core.aggregation.MatchOperation;
 import org.springframework.data.mongodb.core.aggregation.ProjectionOperation;
+import org.springframework.data.mongodb.core.query.BasicQuery;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
@@ -64,11 +65,104 @@ public class UserService {
         }
     }
 
+    public List<Photo> findPhotosbyTagsAndUsername(String tag1, String username) {
+        BasicQuery query = new BasicQuery("{ 'photos.tags': { $all: ['" + tag1 + "'] }, 'username': '" + username + "' }");
+        List<UserPhoto> photos = template.find(query, UserPhoto.class);
+        List<Photo> photosWithTag = new ArrayList<>();
+        for (UserPhoto user : photos) {
+            for (Photo photo : user.getPhotos()) {
+                if (Arrays.asList(photo.getTags()).containsAll(Arrays.asList(tag1))) {
+                    photosWithTag.add(photo);
+                }
+            }
+        }
+        return photosWithTag;
+    }
+
+    public List<Photo> findPhotosbyTagsAndUsername(String tag, String tag2, String username) {
+        BasicQuery query = new BasicQuery("{ 'photos.tags': { $all: ['" + tag + "', '" + tag2 + "'] }, 'username': '" + username + "' }");
+        List<UserPhoto> photos = template.find(query, UserPhoto.class);
+        List<Photo> photosWithTag = new ArrayList<>();
+        for (UserPhoto user : photos) {
+            for (Photo photo : user.getPhotos()) {
+                if (Arrays.asList(photo.getTags()).containsAll(Arrays.asList(tag, tag2))) {
+                    photosWithTag.add(photo);
+                }
+            }
+        }
+        return photosWithTag;
+    }
+
+    public List<Photo> findPhotosbyTagsAndUsername(String tag1, String tag2, String tag3, String username) {
+        BasicQuery query = new BasicQuery("{ 'photos.tags': { $all: ['" + tag1 + "', '" + tag2 + "', '" + tag3 + "'] }, 'username': '" + username + "' }");
+        List<UserPhoto> photos = template.find(query, UserPhoto.class);
+        List<Photo> photosWithTag = new ArrayList<>();
+        for (UserPhoto user : photos) {
+            for (Photo photo : user.getPhotos()) {
+                if (Arrays.asList(photo.getTags()).containsAll(Arrays.asList(tag1, tag2, tag3))) {
+                    photosWithTag.add(photo);
+                }
+            }
+        }
+        return photosWithTag;
+    }
+
     public List<Photo> findPhotosbyTag(String tag) {
-        MatchOperation matchOperation = Aggregation.match(Criteria.where("tags").in(tag));
+        MatchOperation matchOperation = Aggregation.match(Criteria.where("photos.tags").in(tag));
         ProjectionOperation projectionOperation = Aggregation.project("photos", "username");
         Aggregation aggregation = Aggregation.newAggregation(matchOperation, projectionOperation);
-        return template.aggregate(aggregation, "UserPhotos", Photo.class).getMappedResults();
+        List<UserPhoto> photos = template.aggregate(aggregation, "UserPhotos", UserPhoto.class).getMappedResults();
+        List <Photo> photosWithTag = new ArrayList<>();
+        for (UserPhoto user : photos) {
+            for (Photo photo : user.getPhotos()) {
+                if (Arrays.asList(photo.getTags()).contains(tag)) {
+                    photosWithTag.add(photo);
+                }
+            }
+        }
+        return photosWithTag;
+    }
+
+    public List<Photo> findPhotosbyTags(String tag, String tag2, String tag3) {
+    BasicQuery query = new BasicQuery("{ 'photos.tags': { $all: ['" + tag + "', '" + tag2 + "', '" + tag3 + "'] } }");
+    List<UserPhoto> photos = template.find(query, UserPhoto.class);
+    List<Photo> photosWithTag = new ArrayList<>();
+    for (UserPhoto user : photos) {
+        for (Photo photo : user.getPhotos()) {
+            if (Arrays.asList(photo.getTags()).containsAll(Arrays.asList(tag, tag2, tag3))) {
+                photosWithTag.add(photo);
+            }
+        }
+    }
+    return photosWithTag;
+}
+
+    public List<Photo> findPhotosbyTags(String tag, String tag2) {
+        BasicQuery query = new BasicQuery("{ 'photos.tags': { $all: ['" + tag + "', '" + tag2 + "'] } }");
+        List<UserPhoto> photos = template.find(query, UserPhoto.class);
+        List<Photo> photosWithTag = new ArrayList<>();
+        for (UserPhoto user : photos) {
+            for (Photo photo : user.getPhotos()) {
+                if (Arrays.asList(photo.getTags()).containsAll(Arrays.asList(tag, tag2))) {
+                    photosWithTag.add(photo);
+                }
+            }
+        }
+        return photosWithTag;
+    }
+
+    public List<Photo> findPhotosbyTags(String tag) {
+        BasicQuery query = new BasicQuery("{ 'photos.tags': { $all: ['" + tag + "'] } }");
+        List<UserPhoto> photos = template.find(query, UserPhoto.class);
+        List<Photo> photosWithTag = new ArrayList<>();
+        for (UserPhoto user : photos) {
+            for (Photo photo : user.getPhotos()) {
+                if (Arrays.asList(photo.getTags()).containsAll(Arrays.asList(tag))) {
+                    photosWithTag.add(photo);
+                }
+            }
+        }
+        return photosWithTag;
     }
 
 }

@@ -26,4 +26,8 @@ public class Photo {
     public String getId() { return this._id; }
     public String getUser() { return this.user; }
     public String getFilename() { return this.filename; }
+
+    public String[] getTags() {
+        return tags;
+    }
 }
