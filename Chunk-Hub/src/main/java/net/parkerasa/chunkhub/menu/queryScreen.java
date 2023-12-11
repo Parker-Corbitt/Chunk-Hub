@@ -23,6 +23,8 @@ public class queryScreen extends Screen {
 
     private final Minecraft minecraft;
     private String username;
+    private String[] tags;
+    private int get_param;
 
     public queryScreen(Component title) {
         super(title);
@@ -41,13 +43,22 @@ public class queryScreen extends Screen {
         Component prompt = Component.literal("Enter username of photo owner");
         editBox.setHint(prompt);
 
-        int buttonWidth = 100;
+        int tagsBoxWidth = 285;
+        int tagsBoxHeight = 20;
+        int tagsBoxX = (this.width - tagsBoxWidth) / 2; // center the box horizontally
+        int tagsBoxY = (this.height - tagsBoxHeight + 10) / 2; // center the box vertically
+        EditBox tagsBox = new EditBox(font, tagsBoxX, tagsBoxY, tagsBoxWidth, tagsBoxHeight, title);
+        Component tagsHint = Component.literal("Enter tags (comma separated) desired in photo");
+        tagsBox.setHint(tagsHint);
+
+        int buttonWidth = 85;
         int buttonHeight = 20;
         int buttonY = (this.height - 20) / 2 + 30; // below the edit box
 
+        // Individual Buttons
         int buttonXRight = boxX + nameBoxWidth - buttonWidth; // align the right side of the button with the right side
         int buttonXLeft = boxX; // align the left side of the button with the left side of the box
-        int buttonXMiddle = (this.width - buttonWidth) / 2;
+        int buttonXMiddle = (this.width - buttonWidth) / 2; // center the button horizontally
 
         Component cancelMessage = Component.literal("Cancel");
         Component backMessage = Component.literal("Back");
@@ -63,12 +74,32 @@ public class queryScreen extends Screen {
 
         Button.OnPress queryPress = (button) -> {
             username = editBox.getValue();
+            tags = tagsBox.getValue().split(",");
+            for (int i = 0; i < tags.length; i++) {
+                tags[i] = tags[i].replaceAll("[^a-zA-Z0-9_]", "");
+            }
+
+            if((username != null && username.length() > 0) && (tags.length == 0 && tags != null)) {
+                get_param = 0;;
+            }
+            else if((tags.length > 0 && tags != null) && (username == null && username.length() == 0)) {
+                get_param = 1;
+            }
+            else if((username != null && username.length() > 0) && (tags.length > 0 && tags != null))
+            {
+                get_param = 2;
+            }
+            else {
+                return;
+            }
+
             try {
                 sendGetRequest();
             } catch (Exception e) {
                 e.printStackTrace();
             }
         };
+
 
         Button cancel = new Button.Builder(cancelMessage, cancelPress)
                 .pos(buttonXLeft, buttonY) // set position
@@ -85,11 +116,13 @@ public class queryScreen extends Screen {
                 .size(buttonWidth, buttonHeight) // set size
                 .build();
 
+
+
         this.addRenderableWidget(editBox);
         this.addRenderableWidget(back_button);
         this.addRenderableWidget(query);
         this.addRenderableWidget(cancel);
-
+        this.addRenderableWidget(tagsBox);
     }
 
     @Override
@@ -116,13 +149,29 @@ public class queryScreen extends Screen {
 
     }
 
-    public void take_picture() {
-
-    }
-
     public void sendGetRequest() throws Exception {
-        URL url = new URL("http://24.210.19.44:8080/photo-zip?username=");
-        url = new URL(url.toString() + username);
+
+        URL url = new URL("http://");
+        if(get_param == 0) {
+            url = new URL("http://24.210.19.44:8080/photo-user?username=");
+            url = new URL(url.toString() + username);
+        }
+        else if(get_param == 1) {
+            url = new URL("http://24.210.19.44:8080/photo-tags?tags=");
+            url = new URL(url.toString() + tags[0]);
+            // for(int i = 1; i < tags.length; i++) {
+            //     url = new URL(url.toString() + "," + tags[i]);
+            // }
+        }
+        else if (get_param == 2)
+        {
+            url = new URL("http://24.210.19.44:8080/photo-tags-user?username=");
+            url = new URL(url.toString() + username + "&tags=");
+            url = new URL(url.toString() + tags[0]);
+            // for(int i = 1; i < tags.length; i++) {
+            //     url = new URL(url.toString() + "," + tags[i]);
+            // }
+        }
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 
         conn.setRequestMethod("GET");

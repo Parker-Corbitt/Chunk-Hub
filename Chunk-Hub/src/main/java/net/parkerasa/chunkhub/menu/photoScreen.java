@@ -7,8 +7,9 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.parkerasa.chunkhub.menu.photoScreen;
 import net.minecraft.client.Minecraft;
-import java.io.DataOutputStream;
 import java.io.File;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -17,10 +18,15 @@ import com.google.gson.JsonObject;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import net.minecraft.client.Screenshot;
 import net.minecraft.world.entity.player.Player;
+import java.util.Base64;
+import org.apache.http.Consts;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import java.util.concurrent.CompletableFuture;
 import java.util.Arrays;
-import java.net.HttpURLConnection;
-import java.net.URL;
 
 public class photoScreen extends Screen {
 
@@ -58,17 +64,19 @@ public class photoScreen extends Screen {
         tagsBox.setHint(tagsHint);
 
         // Button basics
-        int buttonWidth = 100;
+        int buttonWidth = 85;
         int buttonHeight = 20;
         int buttonY = (this.height - 20) / 2 + 30; // below the edit box
+        int lowerButtonY = (this.height - 20) / 2 + 60; // below the edit box
 
         // Individual Buttons
         int buttonXRight = boxX + nameBoxWidth - buttonWidth; // align the right side of the button with the right side
         int buttonXLeft = boxX; // align the left side of the button with the left side of the box
         int buttonXMiddle = (this.width - buttonWidth) / 2; // center the button horizontally
-
+        
         Component message = Component.literal("Take photo");
         Component cancelMessage = Component.literal("Cancel");
+        Component viewPhotosMessage = Component.literal("View Photos");
 
         // get the filename from the editbox
         Button.OnPress onPress = (button) -> {
@@ -120,6 +128,10 @@ public class photoScreen extends Screen {
         Button.OnPress queryPress = (button) -> {
             this.minecraft.setScreen(new queryScreen(Component.literal("test")));
         };
+    
+        Button.OnPress viewPress = (button) -> {
+            this.minecraft.setScreen(new viewerScreen(Component.literal("test")));
+        };
 
         Button button = new Button.Builder(message, onPress)
                 .pos(buttonXRight, buttonY) // set position
@@ -127,7 +139,7 @@ public class photoScreen extends Screen {
                 .build();
 
         Button cancel = new Button.Builder(cancelMessage, cancelPress)
-                .pos(buttonXLeft, buttonY) // set position
+                .pos(buttonXMiddle, lowerButtonY) // set position
                 .size(buttonWidth, buttonHeight) // set size
                 .build();
 
@@ -136,11 +148,17 @@ public class photoScreen extends Screen {
                 .size(buttonWidth, buttonHeight) // set size
                 .build();
 
+        Button viewPhotos = new Button.Builder(viewPhotosMessage, viewPress)
+                .pos(buttonXLeft, buttonY) // set position
+                .size(buttonWidth, buttonHeight) // set size
+                .build();
+
         this.addRenderableWidget(editBox);
         this.addRenderableWidget(tagsBox);
         this.addRenderableWidget(button);
         this.addRenderableWidget(cancel);
         this.addRenderableWidget(query);
+        this.addRenderableWidget(viewPhotos);
 
     }
 
@@ -193,6 +211,7 @@ public class photoScreen extends Screen {
                 Thread.sleep(2000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
+                System.out.println("Error sleeping");
             }
 
             minecraft.options.hideGui = false;
@@ -213,23 +232,27 @@ public class photoScreen extends Screen {
             Path sourcePath = Paths.get(mostRecentScreenshot.getAbsolutePath());
             try {
                 Files.move(sourcePath, sourcePath.resolveSibling(newName + ".png"));
+                mostRecentScreenshot = new File(
+                        System.getProperty("user.home") + File.separator + "AppData\\Roaming\\.minecraft\\screenshots\\"
+                                + newName + ".png");
             } catch (Exception e) {
                 e.printStackTrace();
+                System.out.println("Error renaming file");
             }
 
             byte[] pngData = null;
             try {
                 pngData = Files.readAllBytes(Paths.get(mostRecentScreenshot.getAbsolutePath()));
             } catch (Exception e) {
+                System.out.println("Error reading file");
                 e.printStackTrace();
             }
 
-            String pngBytes = new String(pngData);
+            String pngBytes = Base64.getEncoder().encodeToString(pngData);
+
             if (tags.length > 3) {
                 tags = Arrays.copyOfRange(tags, 0, 2);
             }
-
-            pngstuff = pngBytes;
 
             body.addProperty("username", minecraft.getUser().getName());
             body.addProperty("filename", editText);
@@ -240,36 +263,39 @@ public class photoScreen extends Screen {
                 sendPutRequest(body);
             } catch (Exception e) {
                 e.printStackTrace();
+                System.out.println("Error sending put request");
             }
 
             String tagsString = Arrays.toString(tags);
             player.sendSystemMessage(Component.literal(tagsString));
         });
-
     }
 
     public void sendPutRequest(JsonObject body) throws Exception {
-        URL url = new URL("http://24.210.19.44:8080/photos");
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 
-        conn.setRequestMethod("PUT");
-        conn.setDoOutput(true);
-        conn.setRequestProperty("Content-Type", "application/json");
+        final StringEntity entity = new StringEntity(body.toString(), Consts.UTF_8);
+        CloseableHttpClient httpClient = HttpClientBuilder.create().build();
 
-        try (DataOutputStream wr = new DataOutputStream(conn.getOutputStream())) {
+        try {
+            HttpPut request = new HttpPut("http://24.210.19.44:8080/photos");
+            request.addHeader("content-type", "application/json");
+            request.setEntity(entity);
 
-            wr.writeBytes(body.toString());
-
-            wr.flush();
-            wr.close();
-        } catch (Exception e) {
-            e.printStackTrace();
+            if (httpClient.execute(request).getStatusLine().getStatusCode() == 200) {
+                Player player = minecraft.player;
+                player.sendSystemMessage(Component.literal("Photo uploaded successfully!"));
+            } else {
+                Player player = minecraft.player;
+                player.sendSystemMessage(Component.literal("Photo upload failed."));
+            }
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        } catch (ClientProtocolException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         } finally {
-            conn.disconnect();
+            httpClient.close();
         }
-
-        int responseCode = conn.getResponseCode();
-        System.out.println("Response Code : " + responseCode);
-        System.out.println(pngstuff);
     }
 }
