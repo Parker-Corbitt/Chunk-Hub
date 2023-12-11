@@ -180,8 +180,6 @@ public class photoScreen extends Screen {
     public void removed() {
 
         super.removed();
-        // Player player = minecraft.player;
-        // player.sendSystemMessage(Component.literal(player.getName().getString()));
 
     }
 

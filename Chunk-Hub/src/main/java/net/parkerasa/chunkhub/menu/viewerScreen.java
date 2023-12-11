@@ -5,13 +5,8 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-
 import javax.imageio.ImageIO;
-import javax.management.DynamicMBean;
-
 import com.mojang.blaze3d.platform.NativeImage;
-
-import io.netty.channel.epoll.Native;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -61,10 +56,6 @@ public class viewerScreen extends Screen {
             this.minecraft.setScreen(new photoScreen(Component.literal("test")));
         };
 
-        Button.OnPress loadPress = (button) -> {
-            load_file();
-        };
-
         Button backButton = new Button.Builder(Component.literal("Back"), backPress)
                 .pos(buttonXMiddle, this.height - 30)
                 .size(buttonWidth, buttonHeight)
@@ -80,15 +71,10 @@ public class viewerScreen extends Screen {
                 .size(buttonWidth, buttonHeight)
                 .build();
 
-        Button loadButton = new Button.Builder(Component.literal("Load"), loadPress)
-                .pos(buttonXMiddle, this.height - 60)
-                .size(buttonWidth, buttonHeight)
-                .build();
-
         this.addRenderableWidget(backButton);
         this.addRenderableWidget(prevButton);
         this.addRenderableWidget(nextButton);
-        this.addRenderableWidget(loadButton);
+        // this.addRenderableWidget(loadButton);
 
         listOfFiles = folder.listFiles();
 
@@ -112,8 +98,10 @@ public class viewerScreen extends Screen {
 
         super.render(graphics, mouseX, mouseY, partialTick);
 
+        // Verifies that there are files in the folder
         if (listOfFiles.length != 0) {
 
+            // Verifies that the image at the current index is loaded
             if (images[index] == null) {
                 load_file();
             }
@@ -121,6 +109,7 @@ public class viewerScreen extends Screen {
             TextureManager textureManager = Minecraft.getInstance().getTextureManager();
 
             try {
+                // Binds the image to the texture manager
                 textureManager.bindForSetup(images[index]);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -129,11 +118,13 @@ public class viewerScreen extends Screen {
 
             textureManager.getTexture(images[index]).setFilter(true, true);
 
-
-            int x = this.width / 2 - width / 2;
-            int y = this.height / 2 - height / 2;
+            // Sets the width and height of the image
+            int x = this.width / 2 - imageWidths[index] / 2;
+            int y = this.height / 2 - imageHeights[index] / 2;
 
             try {
+
+                // Renders the image to the screen
                 graphics.blit(images[index], x, y, 0, 0, imageWidths[index], imageHeights[index]);
                 System.out.println("Blit");
             } catch (Exception e) {
@@ -148,6 +139,20 @@ public class viewerScreen extends Screen {
         super.onClose();
     }
 
+    //Resizes the image to fit the screen
+    public static BufferedImage resizeImage(BufferedImage originalImage, int targetWidth, int targetHeight) {
+
+        // Get the current width and height of the image
+        BufferedImage resizedImage = new BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D graphics2D = resizedImage.createGraphics();
+
+        // Draw the image to the new dimensions
+        graphics2D.drawImage(originalImage, 0, 0, targetWidth, targetHeight, null);
+        graphics2D.dispose();
+
+        return resizedImage;
+    }
+
     public void load_file() {
 
         if (listOfFiles.length == 0) {
@@ -159,35 +164,33 @@ public class viewerScreen extends Screen {
         System.out.println("Load File");
         System.out.println(listOfFiles[index].getName());
 
+        //Initialize the image
         BufferedImage image = null;
         File location = new File(folder + File.separator + listOfFiles[index].getName());
 
         try {
+            // Read the image
             image = ImageIO.read(location);
         } catch (IOException e) {
             e.printStackTrace();
             System.out.println("Error: Not Read" + e);
         }
 
-        // // Define your desired width
-        // int desiredWidth = 1260;
+        if (image != null) {
+            // Get the current game window size
+            int windowWidth = Minecraft.getInstance().getWindow().getWidth();
+            int windowHeight = Minecraft.getInstance().getWindow().getHeight();
 
-        // // Calculate the scaling factor
-        // double scaleFactor = (double) desiredWidth / image.getWidth();
+            // Calculate the scaling factor
+            double scaleFactor = Math.min(256.0 / windowWidth, 256.0 / windowHeight);
 
-        // // Calculate the new height to maintain the aspect ratio
-        // int newHeight = (int) (image.getHeight() * scaleFactor);
+            // Calculate the new dimensions
+            int newWidth = (int) (image.getWidth() * scaleFactor);
+            int newHeight = (int) (image.getHeight() * scaleFactor);
 
-        // // Scale the image
-        // Image scaledImage = image.getScaledInstance(desiredWidth, newHeight, Image.SCALE_SMOOTH);
-
-        // // Convert the scaled image back to BufferedImage
-        // BufferedImage bufferedScaledImage = new BufferedImage(desiredWidth, newHeight, BufferedImage.TYPE_INT_ARGB);
-        // Graphics2D g2d = bufferedScaledImage.createGraphics();
-        // g2d.drawImage(scaledImage, 0, 0, null);
-        // g2d.dispose();
-
-        // image = bufferedScaledImage; // Replace the original image with the scaled one
+            // Resize the image
+            image = resizeImage(image, newWidth, newHeight);
+        }
 
         int width = image.getWidth();
         int height = image.getHeight();
@@ -202,8 +205,10 @@ public class viewerScreen extends Screen {
             pixels[i] = (argb & 0xFF00FF00) | ((argb & 0xFF0000) >> 16) | ((argb & 0xFF) << 16);
         }
 
+        // Create a new ByteBuffer for the pixels
         ByteBuffer byteBuffer = ByteBuffer.allocateDirect(4 * width * height);
 
+        // Set the pixels of the ByteBuffer in RGBA format
         for (int y = height - 1; y >= 0; y--) {
             for (int x = 0; x < width; x++) {
                 int pixel = pixels[y * width + x];
@@ -214,6 +219,7 @@ public class viewerScreen extends Screen {
             }
         }
 
+        // Reset the position of the ByteBuffer
         byteBuffer.flip();
 
         try {
@@ -229,14 +235,18 @@ public class viewerScreen extends Screen {
                 }
             }
 
+            // Create a new DynamicTexture from the NativeImage
             DynamicTexture texture = new DynamicTexture(imagetorender);
+
+            // Create a new ResourceLocation from the DynamicTexture
             ResourceLocation resourceLocation = Minecraft.getInstance().getTextureManager()
                     .register("imagetorender", texture);
+
+            // Set the ResourceLocation to the images array
             images[index] = resourceLocation;
 
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
-
 }
