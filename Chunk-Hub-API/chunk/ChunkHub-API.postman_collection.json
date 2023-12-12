@@ -1,0 +1,129 @@
+{
+	"info": {
+		"_postman_id": "069e1246-6ea2-469d-a640-739d0a24e774",
+		"name": "ChunkHub-API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "31042796"
+	},
+	"item": [
+		{
+			"name": "POST a single photo",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "username",
+							"value": "dev",
+							"type": "text"
+						},
+						{
+							"key": "tags",
+							"value": "fire,one,text,three",
+							"type": "text"
+						},
+						{
+							"key": "image",
+							"type": "file",
+							"src": []
+						},
+						{
+							"key": "filename",
+							"value": "test_shot2b",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "localhost:8080/photo",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"photo"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GET by tags and username",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:8080/photo-tags-user?tag=fire,ice,three&username=dev",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"photo-tags-user"
+					],
+					"query": [
+						{
+							"key": "tag",
+							"value": "fire,ice,three"
+						},
+						{
+							"key": "username",
+							"value": "dev"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GET by username",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:8080/photo-user?username=dev",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"photo-user"
+					],
+					"query": [
+						{
+							"key": "username",
+							"value": "dev"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GET by tags",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:8080/photo-tags?tag=fire,one,two",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"photo-tags"
+					],
+					"query": [
+						{
+							"key": "tag",
+							"value": "fire,one,two"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
