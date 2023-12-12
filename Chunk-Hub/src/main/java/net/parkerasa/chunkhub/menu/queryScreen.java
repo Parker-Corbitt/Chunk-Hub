@@ -203,5 +203,12 @@ public class queryScreen extends Screen {
                 }
             }
         }
+
+        // Delete the zip file
+        File zipFile = new File(zipFilePath);
+        zipFile.delete();
+
+        // Close the connection
+        conn.disconnect();
     }
 }
