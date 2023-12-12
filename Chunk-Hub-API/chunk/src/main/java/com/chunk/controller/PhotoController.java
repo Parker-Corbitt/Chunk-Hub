@@ -79,8 +79,21 @@ class PhotoController {
             String imageValue = Obj.get("image").toString();
             imageValue = imageValue.substring(1, imageValue.length() - 1);
             byte[] imageBytes = Base64.getDecoder().decode(imageValue);
-
-            String[] tags = Obj.get("tags").toString().split(",");
+            String tagValue = Obj.get("tags").toString().toLowerCase();
+            String[] tags = tagValue.split(",");
+            if (tags.length == 0) {
+                //do nothing?
+            } else if (tags.length == 1) {
+                tags[0] = tags[0].substring(2, tags[0].length() - 2);
+            } else {
+                tagValue = tagValue.substring(1, tagValue.length() - 1);
+                tags = tagValue.split(",");
+                tags[0] = tags[0].substring(1);
+                tags[tags.length - 1] = tags[tags.length - 1].substring(1, tags[tags.length - 1].length() - 1);
+                for (int i = 1; i < tags.length - 1; i++) {
+                    tags[i] = tags[i].substring(1);
+                }
+            }
             UserPhoto userCheck = null;
             userCheck = userService.findUserByUsername(userValue);
             if (userCheck == null) {
