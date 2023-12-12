@@ -18,6 +18,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.network.chat.Component;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.world.entity.player.Player;
 
 public class queryScreen extends Screen {
 
@@ -48,7 +49,7 @@ public class queryScreen extends Screen {
         int tagsBoxX = (this.width - tagsBoxWidth) / 2; // center the box horizontally
         int tagsBoxY = (this.height - tagsBoxHeight + 10) / 2; // center the box vertically
         EditBox tagsBox = new EditBox(font, tagsBoxX, tagsBoxY, tagsBoxWidth, tagsBoxHeight, title);
-        Component tagsHint = Component.literal("Enter tags (comma separated) desired in photo");
+        Component tagsHint = Component.literal("Enter 3 tags (comma separated) desired in photo");
         tagsBox.setHint(tagsHint);
 
         int buttonWidth = 85;
@@ -62,7 +63,7 @@ public class queryScreen extends Screen {
 
         Component cancelMessage = Component.literal("Cancel");
         Component backMessage = Component.literal("Back");
-        Component queryMessage = Component.literal("Query");
+        Component queryMessage = Component.literal("Get Photos");
 
         Button.OnPress cancelPress = (button) -> {
             this.onClose();
@@ -86,7 +87,10 @@ public class queryScreen extends Screen {
             } else if (tags[0] != "") {
                 get_param = 1;
             } else {
-                get_param = -1;
+                Player player = Minecraft.getInstance().player;
+                player.sendSystemMessage(
+                                Component.literal("Both field are empty. Please fill out at least one field"));
+                this.onClose();
             }
 
             try {

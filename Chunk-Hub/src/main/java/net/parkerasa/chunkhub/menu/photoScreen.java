@@ -59,7 +59,7 @@ public class photoScreen extends Screen {
         int tagsBoxX = (this.width - tagsBoxWidth) / 2; // center the box horizontally
         int tagsBoxY = (this.height - tagsBoxHeight + 10) / 2; // center the box vertically
         EditBox tagsBox = new EditBox(font, tagsBoxX, tagsBoxY, tagsBoxWidth, tagsBoxHeight, title);
-        Component tagsHint = Component.literal("Enter tags (comma separated)");
+        Component tagsHint = Component.literal("Enter max 3 tags (comma separated)");
         tagsBox.setHint(tagsHint);
 
         // Button basics
@@ -100,11 +100,12 @@ public class photoScreen extends Screen {
                     if (pos > 0) {
                         filename = filename.substring(0, pos);
                     }
-                    if (filename.equals(editText)) {
+                    
+                    if (filename.equals(editText) || editText == "") {
                         this.onClose();
                         Player player = minecraft.player;
                         player.sendSystemMessage(
-                                Component.literal("File already exists. Please enter a different name."));
+                                Component.literal("File already exists or is empty/invalid. Please enter a different name."));
                         return; // exit the method if a file with the same name exists
                     }
                 }
